@@ -69,10 +69,6 @@ function parseFormData(values, header) {
       response_data[key] = value;
     }
 
-    // Once all data is added, we'll adjust the subtotal and total
-    //response_data["sub_total"] = toCurrency(subtotal);
-    //response_data["total"] = toCurrency(subtotal - discount);
-
     return response_data;
 }
 
@@ -125,18 +121,18 @@ function populateTemplate(document, response_data) {
 
 
 // Function to populate the template form
-function createDocFromForm() {
+function createDocFromForm(rowToCheck) {
 
   // Get active sheet and tab of our response data spreadsheet.
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName("mapeo"); 
-  var last_row = sheet.getLastRow() - 1;
+  //var last_row = sheet.getLastRow() - 1;
 
   // Get the data from the spreadsheet.
   var range = sheet.getDataRange();
  
   // Identify the most recent entry and save the data in a variable.
-  var data = range.getValues()[last_row];
+  var data = range.getValues()[rowToCheck-1];
   
   // Extract the headers of the response data to automate string replacement in our template.
   var headers = range.getValues()[0];
@@ -156,6 +152,7 @@ function createDocFromForm() {
 
   // Open the copy.
   var document = DocumentApp.openById(document_copy.getId());
+  var urlFile = document.getUrl();
 
 
 
@@ -163,4 +160,5 @@ function createDocFromForm() {
   populateTemplate(document, response_data);
   document.saveAndClose();
     
+    return urlFile;
 }
