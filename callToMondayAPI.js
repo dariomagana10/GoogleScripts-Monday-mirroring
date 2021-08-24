@@ -3,6 +3,8 @@ var mondayAPIkey  = "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjExNTcxODY0MywidWlkIjoyMTUxMz
 var url = "https://api.monday.com/v2";
 
 
+
+
 //Main API call
 function makeAPICall(key, query, variables) {
   var url = "https://api.monday.com/v2";
@@ -23,16 +25,21 @@ function makeAPICall(key, query, variables) {
   return response;
 }
 
+
+
+
 //Function to delete items that are not on the desired state
 function DeleteFunction() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var s = ss.getSheetByName('mapeo');
-  var r = s.getRange('C:C');
+  var r = s.getRange('D:D');
   var v = r.getValues();
   for(var i=v.length-1;i>=0;i--)
     if(v[0,i]=='Pendiente'||v[0,i]=='Enviar correo')
       s.deleteRow(i+1);
 };
+
+
 
 
 //Removing duplicates
@@ -51,20 +58,12 @@ function RemoveDuplicates() {
   }
 }
 
-function callAPI(){
-  
-}
 
-function setFile(){
 
-}
 
-function updateState() {
-
-}
 
 function getitems() {
-  var query = "query{boards(ids:1601895903, limit:200){id, name, items(limit:200){id,name, column_values{id,text}}}}"; 
+  //var query = "query{boards(ids:1601895903, limit:200){id, name, items(limit:200){id,name, column_values{id,text}}}}"; 
   var query = "query { items_by_column_values (board_id: 1601895903, column_id: \"status\", column_value: \"Generar archivo\") {id, name, updated_at, column_values{id,text}} }";
 
   var variables = {
@@ -105,17 +104,31 @@ function getitems() {
       var file = DriveApp.getFilesByName(items_by_column_values[item]['id'])
       var checkExistence = file.hasNext()
       if (checkExistence === true){
-        Logger.log('it exist') 
+        Logger.log(items_by_column_values[item]['id']+' it exist') 
+
       }
       else{
-        var createDocument = createDocFromForm(); 
-        Logger.log('does not exist') 
-      }     
-        x++;
+        Logger.log(items_by_column_values[item]['id']+' does not exist, it will be created next')
+        var createDocument = createDocFromForm(x);
+
+        var mutationQuery ='mutation($itemID: Int!, $docURL: JSON!) {change_column_value (board_id: 1601895903,item_id: $itemID, column_id: "enlace", value: $docURL) {id}}';
+
+        var variablesMut =
+          {
+          "docURL": JSON.stringify({"url": createDocument, "text": "Ver Documento"}),
+          "itemID": parseInt(items_by_column_values[item]['id']),
+          }
+
+        var mutationCall = JSON.parse(makeAPICall(mondayAPIkey, mutationQuery, variablesMut));
+
+      }
+      Logger.log(createDocument);
+
+      x++;
     }
 
-var deleteFunction = DeleteFunction();
-var removeDuplicates =RemoveDuplicates();
+var deleteFunction = DeleteFunction(); //Delete other status
+var removeDuplicates =RemoveDuplicates(); //Delete duplicates
 
 
 }
